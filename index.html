@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CodeMap Analyzer</title>
+    <style>
+        body { font-family: sans-serif; padding: 2em; }
+        .container { max-width: 600px; margin: 0 auto; }
+        .input-group { margin-bottom: 1.5em; }
+        label { display: block; margin-bottom: 0.5em; }
+        input[type="text"], button { width: 100%; padding: 0.8em; box-sizing: border-box; }
+        button { background-color: #007bff; color: white; border: none; cursor: pointer; }
+        #status { margin-top: 1em; font-style: italic; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>CodeMap Project Analyzer</h1>
+
+        <!-- Option 1: Directory Upload -->
+        <div class="input-group">
+            <label for="directory-upload">Upload Project Folder</label>
+            <!-- Note: The 'webkitdirectory' attribute is key here -->
+            <input type="file" id="directory-upload" webkitdirectory directory multiple />
+        </div>
+        <button id="upload-btn">Analyze Uploaded Folder</button>
+
+        <hr style="margin: 2em 0;">
+
+        <!-- Option 2: GitHub Link -->
+        <div class="input-group">
+            <label for="github-link">Or Enter GitHub Repository URL</label>
+            <input type="text" id="github-link" placeholder="https://github.com/user/repo">
+        </div>
+        <button id="analyze-link-btn">Analyze from GitHub</button>
+        
+        <p id="status"></p>
+    </div>
+
+    <script src="frontend.js"></script>
+</body>
+</html>
