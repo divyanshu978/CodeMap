@@ -1,5 +1,3 @@
-// src/file_processor.js - CORRECTED
-
 const Parser = require('tree-sitter');
 const fs = require('fs');
 const path = require('path');
@@ -19,7 +17,6 @@ function analyzeFile(filePath) {
     parser.setLanguage(config.grammar);
     const tree = parser.parse(fileContent);
 
-    // Pass the entire config object to the extractor
     const analysis = config.extractor.extract(tree, config);
 
     return {

@@ -1,16 +1,51 @@
-const JavaScript = require('tree-sitter-javascript');
+const Go = require('tree-sitter-go');
 const Python = require('tree-sitter-python');
-const Go = require('tree-sitter-go'); // <-- 1. Import the Go grammar
+const Cpp = require('tree-sitter-cpp');
+const Java = require('tree-sitter-java');
+const { typescript, tsx } = require('tree-sitter-typescript');
+const Html = require('tree-sitter-html');
+const Css = require('tree-sitter-css');
+const Kotlin = require('tree-sitter-kotlin');
+const Swift = require('tree-sitter-swift');
+const Dart = require('tree-sitter-dart');
+const Json = require('tree-sitter-json');
+const Yaml = require('tree-sitter-yaml');
 
-const jsExtractor = require('./extractors/js_extractor');
+const goExtractor = require('./extractors/go_extractor');
 const pyExtractor = require('./extractors/py_extractor');
-const goExtractor = require('./extractors/go_extractor'); // <-- 2. Import the Go extractor
+const jsExtractor = require('./extractors/js_extractor');
+const cppExtractor = require('./extractors/cpp_extractor');
+const javaExtractor = require('./extractors/java_extractor');
+const tsExtractor = require('./extractors/ts_extractor');
+const htmlExtractor = require('./extractors/html_extractor');
+const cssExtractor = require('./extractors/css_extractor');
+const kotlinExtractor = require('./extractors/kotlin_extractor');
+const swiftExtractor = require('./extractors/swift_extractor');
+const dartExtractor = require('./extractors/dart_extractor');
+const jsonExtractor = require('./extractors/json_extractor');
+const yamlExtractor = require('./extractors/yaml_extractor');
 
-// This map now holds the grammar AND the correct extractor for each language.
 const languageConfig = {
-    '.js': { grammar: JavaScript, extractor: jsExtractor },
+    '.js': { grammar: tsx, extractor: jsExtractor },
+    '.mjs': { grammar: tsx, extractor: jsExtractor },
+    '.jsx': { grammar: tsx, extractor: jsExtractor },
+    '.ts': { grammar: typescript, extractor: tsExtractor },
+    '.tsx': { grammar: tsx, extractor: tsExtractor },
+    '.go': { grammar: Go, extractor: goExtractor },
     '.py': { grammar: Python, extractor: pyExtractor },
-    '.go': { grammar: Go, extractor: goExtractor }, 
+    '.cpp': { grammar: Cpp, extractor: cppExtractor },
+    '.h': { grammar: Cpp, extractor: cppExtractor },
+    '.hpp': { grammar: Cpp, extractor: cppExtractor },
+    '.java': { grammar: Java, extractor: javaExtractor },
+    '.html': { grammar: Html, extractor: htmlExtractor },
+    '.css': { grammar: Css, extractor: cssExtractor },
+    '.kt': { grammar: Kotlin, extractor: kotlinExtractor },
+    '.kts': { grammar: Kotlin, extractor: kotlinExtractor },
+    '.swift': { grammar: Swift, extractor: swiftExtractor },
+    '.dart': { grammar: Dart, extractor: dartExtractor },
+    '.json': { grammar: Json, extractor: jsonExtractor },
+    '.yaml': { grammar: Yaml, extractor: yamlExtractor },
+    '.yml': { grammar: Yaml, extractor: yamlExtractor },
 };
 
 module.exports = languageConfig;
