@@ -25,6 +25,29 @@ const dartExtractor = require('./extractors/dart_extractor');
 const jsonExtractor = require('./extractors/json_extractor');
 const yamlExtractor = require('./extractors/yaml_extractor');
 
+const ignoreExtensions = new Set([
+    // Models and Assets
+    '.glb', '.gltf', '.obj', '.fbx',
+    // Images
+    '.svg', '.ico', '.png', '.jpg', '.jpeg', '.gif', '.webp', '.bmp',
+    // Fonts
+    '.woff', '.woff2', '.ttf', '.otf', '.eot',
+    // Documents
+    '.md', '.txt', '.log', '.pdf', '.doc', '.docx', '.ppt', '.pptx',
+    // Configuration & Lockfiles (that are not parsed)
+    '.lock', '.env',
+    // Git
+    '.gitignore', '.gitattributes', '.gitmodules',
+    // System / Temp
+    '.DS_Store', '.bak', '.tmp', '.cache',
+    // Archives
+    '.zip', '.tar', '.gz', '.7z', '.rar',
+    // Binaries
+    '.exe', '.dll', '.bin', '.so', '.jar',
+    // Media
+    '.mp3', '.mp4', '.mov', '.avi', '.wav',
+]);
+
 const languageConfig = {
     '.js': { grammar: tsx, extractor: jsExtractor },
     '.mjs': { grammar: tsx, extractor: jsExtractor },
@@ -48,4 +71,4 @@ const languageConfig = {
     '.yml': { grammar: Yaml, extractor: yamlExtractor },
 };
 
-module.exports = languageConfig;
+module.exports = { languageConfig, ignoreExtensions };

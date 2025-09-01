@@ -6,7 +6,7 @@ const projectPath = process.argv[2] || './sample'; // Use command-line arg if pr
 
 
 
-console.log(`Starting analysis of directory: ${projectPath}`);
+// console.log(`Starting analysis of directory: ${projectPath}`);
 
 try {
     const analysisResults = analyzeDirectory(projectPath);
@@ -15,7 +15,7 @@ try {
         files: analysisResults,
     };
 
-    console.log("\n--- Analysis Complete ---");
+    // console.log("\n--- Analysis Complete ---");
     console.log(JSON.stringify(finalOutput, null, 2));
 } catch (error) {
     console.error(`Failed to analyze directory: ${error.message}`);

@@ -1,0 +1,266 @@
+{
+  "files": [
+    {
+      "path": "sample\\app.js",
+      "language": "tsx",
+      "functions": [
+        {
+          "name": "constructor",
+          "params": [
+            "name"
+          ],
+          "calls": [
+            "uuidv4"
+          ],
+          "return_types": [],
+          "is_exported": false,
+          "is_method_of": "User"
+        },
+        {
+          "name": "greet",
+          "params": [],
+          "calls": [],
+          "return_types": [],
+          "is_exported": false,
+          "is_method_of": "User"
+        },
+        {
+          "name": "createUser",
+          "params": [
+            "name"
+          ],
+          "calls": [],
+          "return_types": [],
+          "is_exported": false,
+          "is_method_of": null
+        }
+      ],
+      "classes": [
+        {
+          "name": "User",
+          "properties": [
+            "id",
+            "name"
+          ],
+          "methods": [
+            "constructor",
+            "greet"
+          ],
+          "is_exported": false
+        }
+      ],
+      "imports": [
+        {
+          "source": "uuid"
+        }
+      ]
+    },
+    {
+      "path": "sample\\checks\\app2.js",
+      "language": "tsx",
+      "functions": [
+        {
+          "name": "add",
+          "params": [
+            "a",
+            "b"
+          ],
+          "calls": [],
+          "return_types": [],
+          "is_exported": false,
+          "is_method_of": null
+        }
+      ],
+      "classes": [],
+      "imports": []
+    },
+    {
+      "path": "sample\\checks\\main.go",
+      "language": "go",
+      "functions": [
+        {
+          "name": "add",
+          "params": [
+            "a",
+            "b"
+          ],
+          "calls": [],
+          "return_types": [
+            "int"
+          ],
+          "is_exported": false,
+          "is_method_of": null
+        },
+        {
+          "name": "main",
+          "params": [],
+          "calls": [
+            "fmt.Println",
+            "add"
+          ],
+          "return_types": [
+            "void"
+          ],
+          "is_exported": false,
+          "is_method_of": null
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "fmt"
+        }
+      ]
+    },
+    {
+      "path": "sample\\checks\\utils2.py",
+      "language": "python",
+      "functions": [
+        {
+          "name": "add",
+          "params": [
+            "a",
+            "b"
+          ],
+          "calls": [],
+          "return_types": [
+            "any"
+          ],
+          "is_exported": true,
+          "is_method_of": null
+        }
+      ],
+      "classes": [],
+      "imports": []
+    },
+    {
+      "path": "sample\\file.go",
+      "language": "go",
+      "functions": [
+        {
+          "name": "SetGPA",
+          "params": [
+            "gpa"
+          ],
+          "calls": [],
+          "return_types": [
+            "void"
+          ],
+          "is_exported": true,
+          "is_method_of": null
+        },
+        {
+          "name": "GetGPA",
+          "params": [],
+          "calls": [],
+          "return_types": [
+            "float64"
+          ],
+          "is_exported": true,
+          "is_method_of": null
+        },
+        {
+          "name": "DisplayInfo",
+          "params": [],
+          "calls": [
+            "fmt.Printf"
+          ],
+          "return_types": [
+            "void"
+          ],
+          "is_exported": true,
+          "is_method_of": null
+        },
+        {
+          "name": "main",
+          "params": [],
+          "calls": [
+            "s1.DisplayInfo",
+            "s1.SetGPA",
+            "fmt.Println"
+          ],
+          "return_types": [
+            "void"
+          ],
+          "is_exported": false,
+          "is_method_of": null
+        }
+      ],
+      "classes": [
+        {
+          "name": "Student",
+          "properties": [],
+          "methods": [],
+          "is_exported": true
+        }
+      ],
+      "imports": [
+        {
+          "source": "fmt"
+        }
+      ]
+    },
+    {
+      "path": "sample\\utils.py",
+      "language": "python",
+      "functions": [
+        {
+          "name": "__init__",
+          "params": [
+            "data"
+          ],
+          "calls": [],
+          "return_types": [
+            "any"
+          ],
+          "is_exported": false,
+          "is_method_of": "DataProcessor"
+        },
+        {
+          "name": "count_items",
+          "params": [],
+          "calls": [
+            "Counter"
+          ],
+          "return_types": [
+            "any"
+          ],
+          "is_exported": true,
+          "is_method_of": "DataProcessor"
+        },
+        {
+          "name": "process_data",
+          "params": [
+            "data_list"
+          ],
+          "calls": [
+            "DataProcessor",
+            "processor.count_items",
+            "print"
+          ],
+          "return_types": [
+            "any"
+          ],
+          "is_exported": true,
+          "is_method_of": null
+        }
+      ],
+      "classes": [
+        {
+          "name": "DataProcessor",
+          "properties": [],
+          "methods": [
+            "__init__",
+            "count_items"
+          ],
+          "is_exported": true
+        }
+      ],
+      "imports": [
+        {
+          "source": "os"
+        }
+      ]
+    }
+  ]
+}
