@@ -32,16 +32,21 @@ async function importToNeo4j() {
 
         console.log('Step 4: Creating all nodes (Files, Classes, Functions, Properties, Parameters)...');
         for (const file of analysisData.files) {
-            if (file.error || !file.functions) continue;
+            if (file.error) continue; // Skip files that had a parsing error
+
+            // --- THIS IS THE FIX ---
+            // If file.language is missing (undefined/null), default to 'unknown'.
+            const language = file.language || 'unknown';
 
             await session.executeWrite(tx => tx.run(
                 'MERGE (f:File {path: $path}) ON CREATE SET f.language = $language',
-                { path: file.path, language: file.language }
+                { path: file.path, language: language }
             ));
             
+            // ... (The rest of your code for creating classes, functions, etc., remains the same)
+
             for (const cls of file.classes || []) {
                 const classId = `${file.path}#${cls.name}`;
-                // MERGE on the unique ID, then SET properties
                 await session.executeWrite(tx => tx.run(
                     `MERGE (c:Class {id: $id})
                      ON CREATE SET c.name = $name, c.is_exported = $is_exported
@@ -67,8 +72,6 @@ async function importToNeo4j() {
 
             for (const func of file.functions || []) {
                 const funcId = `${file.path}#${func.name}`;
-                // --- THIS IS THE FIX ---
-                // MERGE on the unique ID, then SET properties, gracefully handling null for is_method_of
                 await session.executeWrite(tx => tx.run(
                     `MERGE (fn:Function {id: $id})
                      ON CREATE SET 
@@ -89,7 +92,7 @@ async function importToNeo4j() {
                         name: func.name, 
                         is_exported: func.is_exported, 
                         return_type: (func.return_types || []).join(', '),
-                        is_method_of: func.is_method_of, // This can now be null
+                        is_method_of: func.is_method_of,
                         filePath: file.path 
                     }
                 ));
@@ -111,7 +114,7 @@ async function importToNeo4j() {
 
         console.log('Step 5: Creating all relationships (IMPORTS, HAS_METHOD, CALLS)...');
         for (const file of analysisData.files) {
-             if (file.error || !file.functions) continue;
+             if (file.error) continue;
             
             for (const imp of file.imports || []) {
                 if (imp.source) {
