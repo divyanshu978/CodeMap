@@ -32,8 +32,41 @@ func NewDB(cfg *config.AppConfig) (*DB, error) {
 	}
 
 	fmt.Println("Successfully connected to Neo4j.")
-
 	return &DB{Driver: driver}, nil
+}
+
+// --- NEW METHOD ---
+// Query executes a read-only Cypher query and returns the results as a slice of maps,
+// which is ready to be converted to JSON.
+func (db *DB) Query(ctx context.Context, cypher string, params map[string]any) ([]map[string]any, error) {
+	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeRead})
+	defer session.Close(ctx)
+
+	result, err := session.ExecuteRead(ctx, func(tx neo4j.ManagedTransaction) (any, error) {
+		res, err := tx.Run(ctx, cypher, params)
+		if err != nil {
+			return nil, err
+		}
+
+		records, err := res.Collect(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		// Convert the Neo4j records into a generic format that's easy to serialize.
+		var results []map[string]any
+		for _, record := range records {
+			results = append(results, record.AsMap())
+		}
+		
+		return results, nil
+	})
+
+	if err != nil {
+		return nil, fmt.Errorf("failed during query execution: %w", err)
+	}
+
+	return result.([]map[string]any), nil
 }
 
 // ImportAnalysis imports the entire analysis result into Neo4j within a single transaction.
@@ -60,7 +93,6 @@ func (db *DB) ImportAnalysis(ctx context.Context, analysisData *models.Analysis)
 				return nil, fmt.Errorf("failed to create relationships for file %s: %w", file.Path, err)
 			}
 		}
-
 		return nil, nil
 	})
 
@@ -73,151 +105,174 @@ func (db *DB) ImportAnalysis(ctx context.Context, analysisData *models.Analysis)
 }
 
 // --- Helper functions for the transaction ---
-
 func createNodesForFile(ctx context.Context, tx neo4j.ManagedTransaction, file models.File) error {
-	// Create File node
-	_, err := tx.Run(ctx, `
-		MERGE (f:File {path: $path})
-		ON CREATE SET f.language = $language
-	`, map[string]any{
-		"path":     file.Path,
-		"language": file.Language,
-	})
-	if err != nil {
-		return err
-	}
+    // Create File node
+    _, err := tx.Run(ctx, `
+        MERGE (f:File {path: $path})
+        ON CREATE SET f.language = $language
+    `, map[string]any{
+        "path":     file.Path,
+        "language": file.Language,
+    })
+    if err != nil {
+        return err
+    }
 
-	// Create Class and Property nodes
-	for _, class := range file.Classes {
-		classID := fmt.Sprintf("%s#%s", file.Path, class.Name)
-		_, err := tx.Run(ctx, `
-			MATCH (f:File {path: $filePath})
-			MERGE (c:Class {id: $classID})
-			ON CREATE SET c.name = $name, c.is_exported = $is_exported
-			MERGE (f)-[:CONTAINS]->(c)
-		`, map[string]any{
-			"filePath":    file.Path,
-			"classID":     classID,
-			"name":        class.Name,
-			"is_exported": class.IsExported,
-		})
-		if err != nil {
-			return err
-		}
+    // Create Class and Property nodes
+    for _, class := range file.Classes {
+        classID := fmt.Sprintf("%s#%s", file.Path, class.Name)
+        _, err := tx.Run(ctx, `
+            MATCH (f:File {path: $filePath})
+            MERGE (c:Class {id: $classID})
+            ON CREATE SET c.name = $name, c.is_exported = $is_exported
+            MERGE (f)-[:CONTAINS]->(c)
+        `, map[string]any{
+            "filePath":    file.Path,
+            "classID":     classID,
+            "name":        class.Name,
+            "is_exported": class.IsExported,
+        })
+        if err != nil {
+            return err
+        }
 
-		for _, propName := range class.Properties {
-			propID := fmt.Sprintf("%s::%s", classID, propName)
-			_, err := tx.Run(ctx, `
-				MATCH (c:Class {id: $classID})
-				MERGE (p:Property {id: $propID})
-				ON CREATE SET p.name = $name
-				MERGE (c)-[:HAS_PROPERTY]->(p)
-			`, map[string]any{
-				"classID": classID,
-				"propID":  propID,
-				"name":    propName,
-			})
-			if err != nil {
-				return err
-			}
-		}
-	}
+        for _, propName := range class.Properties {
+            propID := fmt.Sprintf("%s::%s", classID, propName)
+            _, err := tx.Run(ctx, `
+                MATCH (c:Class {id: $classID})
+                MERGE (p:Property {id: $propID})
+                ON CREATE SET p.name = $name
+                MERGE (c)-[:HAS_PROPERTY]->(p)
+            `, map[string]any{
+                "classID": classID,
+                "propID":  propID,
+                "name":    propName,
+            })
+            if err != nil {
+                return err
+            }
+        }
+    }
 
-	// Create Function and Parameter nodes
-	for _, function := range file.Functions {
-		funcID := fmt.Sprintf("%s#%s", file.Path, function.Name)
-		_, err := tx.Run(ctx, `
-			MATCH (f:File {path: $filePath})
-			MERGE (fn:Function {id: $funcID})
-			ON CREATE SET fn.name = $name, fn.is_exported = $is_exported, fn.is_method_of = $is_method_of
-			MERGE (f)-[:CONTAINS]->(fn)
-		`, map[string]any{
-			"filePath":     file.Path,
-			"funcID":       funcID,
-			"name":         function.Name,
-			"is_exported":  function.IsExported,
-			"is_method_of": function.IsMethodOf,
-		})
-		if err != nil {
-			return err
-		}
-		
-		for _, paramName := range function.Params {
-			paramID := fmt.Sprintf("%s(%s)", funcID, paramName)
-			_, err := tx.Run(ctx, `
-				MATCH (fn:Function {id: $funcID})
-				MERGE (p:Parameter {id: $paramID})
-				ON CREATE SET p.name = $name
-				MERGE (fn)-[:HAS_PARAMETER]->(p)
-			`, map[string]any{
-				"funcID":  funcID,
-				"paramID": paramID,
-				"name":    paramName,
-			})
-			if err != nil {
-				return err
-			}
-		}
-	}
-	return nil
+    // Create Function and Parameter nodes
+    for _, function := range file.Functions {
+        funcID := fmt.Sprintf("%s#%s", file.Path, function.Name)
+        _, err := tx.Run(ctx, `
+            MATCH (f:File {path: $filePath})
+            MERGE (fn:Function {id: $funcID})
+            ON CREATE SET fn.name = $name, fn.is_exported = $is_exported, fn.is_method_of = $is_method_of
+            MERGE (f)-[:CONTAINS]->(fn)
+        `, map[string]any{
+            "filePath":     file.Path,
+            "funcID":       funcID,
+            "name":         function.Name,
+            "is_exported":  function.IsExported,
+            "is_method_of": function.IsMethodOf,
+        })
+        if err != nil {
+            return err
+        }
+        
+        for _, paramName := range function.Params {
+            paramID := fmt.Sprintf("%s(%s)", funcID, paramName)
+            _, err := tx.Run(ctx, `
+                MATCH (fn:Function {id: $funcID})
+                MERGE (p:Parameter {id: $paramID})
+                ON CREATE SET p.name = $name
+                MERGE (fn)-[:HAS_PARAMETER]->(p)
+            `, map[string]any{
+                "funcID":  funcID,
+                "paramID": paramID,
+                "name":    paramName,
+            })
+            if err != nil {
+                return err
+            }
+        }
+    }
+    return nil
 }
 
 func createRelationshipsForFile(ctx context.Context, tx neo4j.ManagedTransaction, file models.File) error {
-	// Create IMPORTS relationships
-	for _, imp := range file.Imports {
-		if imp.Source != "" {
-			_, err := tx.Run(ctx, `
-				MATCH (importer:File {path: $importerPath})
-				MATCH (imported:File) WHERE imported.path ENDS WITH $importSource
-				MERGE (importer)-[:IMPORTS]->(imported)
-			`, map[string]any{
-				"importerPath": file.Path,
-				"importSource": imp.Source,
-			})
-			if err != nil {
-				return err
-			}
-		}
-	}
+    // Create IMPORTS relationships
+    for _, imp := range file.Imports {
+        if imp.Source != "" {
+            _, err := tx.Run(ctx, `
+                MATCH (importer:File {path: $importerPath})
+                MATCH (imported:File) WHERE imported.path ENDS WITH $importSource
+                MERGE (importer)-[:IMPORTS]->(imported)
+            `, map[string]any{
+                "importerPath": file.Path,
+                "importSource": imp.Source,
+            })
+            if err != nil {
+                return err
+            }
+        }
+    }
 
-	// Create HAS_METHOD and CALLS relationships
-	for _, function := range file.Functions {
-		funcID := fmt.Sprintf("%s#%s", file.Path, function.Name)
+    // Create HAS_METHOD and CALLS relationships
+    for _, function := range file.Functions {
+        funcID := fmt.Sprintf("%s#%s", file.Path, function.Name)
 
-		if function.IsMethodOf != "" {
-			classID := fmt.Sprintf("%s#%s", file.Path, function.IsMethodOf)
-			_, err := tx.Run(ctx, `
-				MATCH (c:Class {id: $classID})
-				MATCH (fn:Function {id: $funcID})
-				MERGE (c)-[:HAS_METHOD]->(fn)
-			`, map[string]any{
-				"classID": classID,
-				"funcID":  funcID,
-			})
-			if err != nil {
-				return err
-			}
-		}
+        if function.IsMethodOf != "" {
+            classID := fmt.Sprintf("%s#%s", file.Path, function.IsMethodOf)
+            _, err := tx.Run(ctx, `
+                MATCH (c:Class {id: $classID})
+                MATCH (fn:Function {id: $funcID})
+                MERGE (c)-[:HAS_METHOD]->(fn)
+            `, map[string]any{
+                "classID": classID,
+                "funcID":  funcID,
+            })
+            if err != nil {
+                return err
+            }
+        }
 
-		for _, calledFuncName := range function.Calls {
-			_, err := tx.Run(ctx, `
-				MATCH (caller:Function {id: $callerID})
-				MATCH (callee:Function {name: $calleeName})
-				MERGE (caller)-[:CALLS]->(callee)
-			`, map[string]any{
-				"callerID":   funcID,
-				"calleeName": calledFuncName,
-			})
-			if err != nil {
-				// This can fail if a called function is not in our analysis, so we log it but don't stop the import.
-				fmt.Printf("Could not create CALLS relationship for %s to %s: %v\n", funcID, calledFuncName, err)
-			}
-		}
-	}
-	return nil
+        for _, calledFuncName := range function.Calls {
+            _, err := tx.Run(ctx, `
+                MATCH (caller:Function {id: $callerID})
+                MATCH (callee:Function {name: $calleeName})
+                MERGE (caller)-[:CALLS]->(callee)
+            `, map[string]any{
+                "callerID":   funcID,
+                "calleeName": calledFuncName,
+            })
+            if err != nil {
+                // This can fail if a called function is not in our analysis, so we log it but don't stop the import.
+                fmt.Printf("Could not create CALLS relationship for %s to %s: %v\n", funcID, calledFuncName, err)
+            }
+        }
+    }
+    return nil
 }
 
 // Close gracefully closes the database driver.
 func (db *DB) Close(ctx context.Context) {
 	db.Driver.Close(ctx)
 }
+
+
+
+
+// Yes, you have described the process **perfectly**. That is exactly how the data flows through our system from the raw code files to the structured graph in the database.
+
+// Let's break down the journey of the data that the `ImportAnalysis` function receives:
+
+// **Step 1: The Analysis Tool (Node.js)**
+// *   Our Go backend executes the `node main.js` command, pointing it to a directory of source code.
+// *   The Node.js tool, using Tree-sitter, parses every file.
+// *   Your extractors pull out the essential information (functions, classes, calls, imports).
+// *   The `main.js` script gathers all of this information into one giant JSON object and prints it to the console (`stdout`).
+
+// **Step 2: The Go Backend Captures the Data**
+// *   The `analysis.Run()` function in Go captures this raw JSON string output.
+// *   It then uses Go's `json.Unmarshal` function to parse this string into our Go structs, specifically the `models.Analysis` struct. This is the "translation" step from unstructured text to a strongly-typed Go object.
+
+// **Step 3: The `ImportAnalysis` Function Takes Over**
+// *   This fully populated `*models.Analysis` struct is then passed as an argument to the `db.ImportAnalysis()` function.
+// *   The `ImportAnalysis` function iterates through the slices within the struct (`analysisData.Files`, `file.Functions`, `file.Classes`, etc.).
+// *   For each item in the Go structs, it executes a specific Cypher command (`MERGE`, `CREATE`) to create the corresponding node and its relationships in Neo4j.
+
+// You have a complete and accurate mental model of how our data pipeline works. This clear understanding is the foundation for everything we build next.

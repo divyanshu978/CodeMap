@@ -1,7 +1,5 @@
 // tools/main.js
-const fs = require('fs');
-const path = require('path');
-const { processFile } = require('./src/file_processor');
+const { analyzeDirectory } = require('./src/file_processor');
 
 // Get the target directory from the command-line arguments.
 // process.argv[0] is 'node', process.argv[1] is 'main.js'.
@@ -12,36 +10,10 @@ if (!targetDir) {
   process.exit(1);
 }
 
-// This function recursively walks through a directory and finds all files.
-function getAllFiles(dirPath, arrayOfFiles = []) {
-  const files = fs.readdirSync(dirPath);
-
-  files.forEach((file) => {
-    const fullPath = path.join(dirPath, file);
-    if (fs.statSync(fullPath).isDirectory()) {
-      // Ignore node_modules directories.
-      if (path.basename(fullPath) !== 'node_modules') {
-        getAllFiles(fullPath, arrayOfFiles);
-      }
-    } else {
-      arrayOfFiles.push(fullPath);
-    }
-  });
-
-  return arrayOfFiles;
-}
-
 // --- Main Execution Logic ---
 try {
-  const allFilePaths = getAllFiles(targetDir);
-  const analysisResults = [];
-
-  for (const filePath of allFilePaths) {
-    const fileAnalysis = processFile(filePath, targetDir);
-    if (fileAnalysis) {
-      analysisResults.push(fileAnalysis);
-    }
-  }
+  // Call the single, powerful function from file_processor.js
+  const analysisResults = analyzeDirectory(targetDir);
 
   const finalOutput = {
     files: analysisResults,
