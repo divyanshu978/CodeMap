@@ -1,4 +1,3 @@
-// backend/internal/analysis/runner.go
 package analysis
 
 import (

@@ -1,4 +1,3 @@
-// backend/internal/models/models.go
 package models
 
 // Analysis represents the top-level structure of our analysis-output.json.
