@@ -10,14 +10,17 @@ import (
 
 // Run executes the Node.js analysis tool and returns the parsed data.
 func Run(toolsPath string, targetDir string) (*models.Analysis, error) {
+
+
 	// The command and its directory are now configured externally.
+
 	cmd := exec.Command("node", "main.js", targetDir)
 	cmd.Dir = toolsPath 
 
 	fmt.Printf("Running analysis tool in: %s\n", toolsPath)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		return nil, fmt.Errorf("failed to run analysis tool: %w\nOutput: %s", err, string(output))
+		return nil, fmt.Errorf("failed to run analysis tool : %w\nOutput : %s", err, string(output))
 	}
 
 	var analysisResult models.Analysis

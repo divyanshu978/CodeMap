@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/cors"
 )
 
 func (app *application) routes() http.Handler {
@@ -16,6 +17,16 @@ func (app *application) routes() http.Handler {
 	r.Use(middleware.RealIP)
 	r.Use(middleware.Logger)
 
+	    // CORS settings
+    r.Use(cors.Handler(cors.Options{
+        AllowedOrigins:   []string{"http://localhost:3000"}, // frontend origin
+        AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+        AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
+        ExposedHeaders:   []string{"Link"},
+        AllowCredentials: true,
+        MaxAge:           300, // Maximum value not ignored by browsers
+    }))
+
 	// API v1 routes
 	r.Route("/v1", func(r chi.Router) {
 		r.Get("/healthcheck", app.healthCheckHandler)
@@ -23,6 +34,7 @@ func (app *application) routes() http.Handler {
 		r.Post("/analyze-local",app.analyzeLocalHandler)
 		r.Post("/query", app.queryHandler)
 	})
+
 
 	return r
 }
