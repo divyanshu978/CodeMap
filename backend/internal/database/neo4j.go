@@ -34,8 +34,7 @@ func NewDB(cfg *config.AppConfig) (*DB, error) {
 	return &DB{Driver: driver}, nil
 }
 
-// Query executes a read-only Cypher query and returns the results as a slice of maps,
-// which is ready to be converted to JSON.
+// Query executes a read-only Cypher query and returns the results as a slice of maps, which is ready to be converted to JSON.
 func (db *DB) Query(ctx context.Context, cypher string, params map[string]any) ([]map[string]any, error) {
 	session := db.Driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeRead})
 	defer session.Close(ctx)
