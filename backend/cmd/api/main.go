@@ -1,9 +1,10 @@
 package main
 
 import (
-	"context"
 	"codemap/backend/internal/config"
 	"codemap/backend/internal/database"
+	"codemap/backend/internal/s3"
+	"context"
 	"errors"
 	"fmt"
 	"log"
@@ -20,6 +21,7 @@ type application struct {
 	config *config.AppConfig
 	db     *database.DB
 	logger *log.Logger
+	s3     *s3.Service
 }
 
 func main() {
@@ -29,7 +31,7 @@ func main() {
 	}
 
 	logger := log.New(os.Stdout, "", log.Ldate|log.Ltime)
-	
+
 	cfg := config.Load()
 
 	db, err := database.NewDB(cfg)
@@ -38,10 +40,16 @@ func main() {
 	}
 	defer db.Close(context.Background())
 
+	s3Service, err := s3.NewS3Service(cfg.S3Region, cfg.AWSAccessKey, cfg.AWSSecretKey, cfg.S3Bucket)
+	if err != nil {
+		logger.Fatalf("Could not initialize S3 service: %v", err)
+	}
+
 	app := &application{
 		config: cfg,
 		db:     db,
 		logger: logger,
+		s3:     s3Service,
 	}
 
 	srv := &http.Server{
@@ -59,7 +67,7 @@ func main() {
 		quit := make(chan os.Signal, 1)
 		signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 		s := <-quit
-		
+
 		logger.Printf("Caught signal: %v. Shutting down server...", s)
 
 		ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
@@ -74,7 +82,7 @@ func main() {
 	if !errors.Is(err, http.ErrServerClosed) {
 		logger.Fatalf("Server error: %v", err)
 	}
-	
+
 	err = <-shutdownError
 	if err != nil {
 		logger.Fatalf("Error during shutdown: %v", err)

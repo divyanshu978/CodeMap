@@ -49,7 +49,21 @@ func (app *application) uploadHandler(w http.ResponseWriter, r *http.Request) {
 		app.errorResponse(w, r, http.StatusInternalServerError, "Could not create temp file.")
 		return
 	}
-	_, err = io.Copy(tempFile, file)
+	zipData, err := io.ReadAll(file)
+	if err != nil {
+		app.errorResponse(w, r, http.StatusInternalServerError, "Could not read uploaded file.")
+		return
+	}
+
+	// Upload to S3
+	s3Key, err := app.s3.UploadZipFile(zipData, handler.Filename)
+	if err != nil {
+		app.errorResponse(w, r, http.StatusInternalServerError, fmt.Sprintf("Failed to upload to S3: %v", err))
+		return
+	}
+
+	// Write to temporary file for local processing
+	_, err = tempFile.Write(zipData)
 	tempFile.Close() // Close file before unzipping
 	if err != nil {
 		app.errorResponse(w, r, http.StatusInternalServerError, "Could not save uploaded file.")
@@ -77,6 +91,43 @@ func (app *application) uploadHandler(w http.ResponseWriter, r *http.Request) {
 	// Send a success response
 	app.writeJSON(w, http.StatusAccepted, map[string]string{
 		"message": "Upload successful. Codebase has been analyzed and imported.",
+		"s3_key":  s3Key,
+	})
+}
+
+// githubHandler handles GitHub repository URL submission for analysis.
+func (app *application) githubHandler(w http.ResponseWriter, r *http.Request) {
+	var payload struct {
+		RepoURL string `json:"repo_url"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		app.errorResponse(w, r, http.StatusBadRequest, "Invalid JSON payload")
+		return
+	}
+
+	if payload.RepoURL == "" {
+		app.errorResponse(w, r, http.StatusBadRequest, "Repository URL is required")
+		return
+	}
+
+	// Validate GitHub URL format
+	if !strings.Contains(payload.RepoURL, "github.com") {
+		app.errorResponse(w, r, http.StatusBadRequest, "Please provide a valid GitHub repository URL")
+		return
+	}
+
+	// Upload GitHub repo to S3
+	s3Key, err := app.s3.UploadGitRepo(payload.RepoURL)
+	if err != nil {
+		app.errorResponse(w, r, http.StatusInternalServerError, fmt.Sprintf("Failed to clone and upload repository: %v", err))
+		return
+	}
+
+	app.writeJSON(w, http.StatusAccepted, map[string]string{
+		"message":  "GitHub repository has been cloned and uploaded to S3 successfully.",
+		"s3_key":   s3Key,
+		"repo_url": payload.RepoURL,
 	})
 }
 
