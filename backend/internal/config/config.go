@@ -26,7 +26,7 @@ func getEnv(key, fallback string) string {
 func Load() *AppConfig {
 	return &AppConfig{
 		Port:         getEnv("PORT", "8080"),
-		Neo4jURI:     getEnv("NEO4J_URI", "neo4j://localhost:7687"),
+		Neo4jURI:     getEnv("NEO4J_URI", "path"),
 		Neo4jUser:    getEnv("NEO4J_USER", "neo4j"),
 		Neo4jPass:    getEnv("NEO4J_PASS", "your_neo4j_password"), 
 		ToolsPath:    getEnv("TOOLS_PATH", "../tools"), 
