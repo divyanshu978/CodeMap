@@ -1,4 +1,3 @@
-// backend/cmd/api/handlers.go
 package main
 
 import (

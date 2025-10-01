@@ -1,4 +1,3 @@
-// backend/cmd/api/routes.go
 package main
 
 import (

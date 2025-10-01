@@ -1,4 +1,3 @@
-// backend/internal/database/neo4j.go
 package database
 
 import (
@@ -35,7 +34,6 @@ func NewDB(cfg *config.AppConfig) (*DB, error) {
 	return &DB{Driver: driver}, nil
 }
 
-// --- NEW METHOD ---
 // Query executes a read-only Cypher query and returns the results as a slice of maps,
 // which is ready to be converted to JSON.
 func (db *DB) Query(ctx context.Context, cypher string, params map[string]any) ([]map[string]any, error) {
@@ -53,7 +51,6 @@ func (db *DB) Query(ctx context.Context, cypher string, params map[string]any) (
 			return nil, err
 		}
 
-		// Convert the Neo4j records into a generic format that's easy to serialize.
 		var results []map[string]any
 		for _, record := range records {
 			results = append(results, record.AsMap())
@@ -104,7 +101,7 @@ func (db *DB) ImportAnalysis(ctx context.Context, analysisData *models.Analysis)
 	return nil
 }
 
-// --- Helper functions for the transaction ---
+// Helper functions for the transaction
 func createNodesForFile(ctx context.Context, tx neo4j.ManagedTransaction, file models.File) error {
     // Create File node
     _, err := tx.Run(ctx, `
@@ -254,25 +251,3 @@ func (db *DB) Close(ctx context.Context) {
 }
 
 
-
-
-// Yes, you have described the process **perfectly**. That is exactly how the data flows through our system from the raw code files to the structured graph in the database.
-
-// Let's break down the journey of the data that the `ImportAnalysis` function receives:
-
-// **Step 1: The Analysis Tool (Node.js)**
-// *   Our Go backend executes the `node main.js` command, pointing it to a directory of source code.
-// *   The Node.js tool, using Tree-sitter, parses every file.
-// *   Your extractors pull out the essential information (functions, classes, calls, imports).
-// *   The `main.js` script gathers all of this information into one giant JSON object and prints it to the console (`stdout`).
-
-// **Step 2: The Go Backend Captures the Data**
-// *   The `analysis.Run()` function in Go captures this raw JSON string output.
-// *   It then uses Go's `json.Unmarshal` function to parse this string into our Go structs, specifically the `models.Analysis` struct. This is the "translation" step from unstructured text to a strongly-typed Go object.
-
-// **Step 3: The `ImportAnalysis` Function Takes Over**
-// *   This fully populated `*models.Analysis` struct is then passed as an argument to the `db.ImportAnalysis()` function.
-// *   The `ImportAnalysis` function iterates through the slices within the struct (`analysisData.Files`, `file.Functions`, `file.Classes`, etc.).
-// *   For each item in the Go structs, it executes a specific Cypher command (`MERGE`, `CREATE`) to create the corresponding node and its relationships in Neo4j.
-
-// You have a complete and accurate mental model of how our data pipeline works. This clear understanding is the foundation for everything we build next.
