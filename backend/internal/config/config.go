@@ -10,8 +10,12 @@ type AppConfig struct {
 	Neo4jURI     string
 	Neo4jUser    string
 	Neo4jPass    string
-	ToolsPath    string 
-	TempUploads  string 
+	ToolsPath    string
+	TempUploads  string
+	S3Bucket     string
+	S3Region     string
+	AWSAccessKey string
+	AWSSecretKey string
 }
 
 // getEnv reads an environment variable or returns a default value.
@@ -28,8 +32,8 @@ func Load() *AppConfig {
 		Port:         getEnv("PORT", "8080"),
 		Neo4jURI:     getEnv("NEO4J_URI", "neo4j://127.0.0.1:7687"),
 		Neo4jUser:    getEnv("NEO4J_USER", "neo4j"),
-		Neo4jPass:    getEnv("NEO4J_PASS", "password"), // IMPORTANT: Change this or set env var
-		ToolsPath:    getEnv("TOOLS_PATH", "../../../tools"), // Default for local dev
-		TempUploads:  getEnv("TEMP_UPLOADS", os.TempDir()), // Use system's temp dir
+		Neo4jPass:    getEnv("NEO4J_PASS", "your_neo4j_password"), 
+		ToolsPath:    getEnv("TOOLS_PATH", "../tools"), 
+		TempUploads:  getEnv("TEMP_UPLOADS", os.TempDir()), 
 	}
 }

@@ -11,10 +11,10 @@ import (
 // Run executes the Node.js analysis tool and returns the parsed data.
 func Run(toolsPath string, targetDir string) (*models.Analysis, error) {
 
+
 	// The command and its directory are now configured externally.
 	cmd := exec.Command("node", "main.js", targetDir)
 	cmd.Dir = toolsPath 
-
 	fmt.Printf("Running analysis tool in: %s\n", toolsPath)
 	fmt.Printf("Target directory: %s\n", targetDir)
 	
@@ -38,7 +38,7 @@ func Run(toolsPath string, targetDir string) (*models.Analysis, error) {
 	if len(output) == 0 {
 		return nil, fmt.Errorf("no output received from analysis tool")
 	}
-	
+
 	var analysisResult models.Analysis
 	err = json.Unmarshal(output, &analysisResult)
 	if err != nil {
@@ -49,6 +49,6 @@ func Run(toolsPath string, targetDir string) (*models.Analysis, error) {
 		return nil, fmt.Errorf("failed to unmarshal analysis result: %w\nOutput received: %s", err, string(output))
 	}
 
-	fmt.Printf("Successfully parsed analysis output. Found %d files.\n", len(analysisResult.Files))
+	fmt.Println("Successfully parsed analysis output.")
 	return &analysisResult, nil
 }
