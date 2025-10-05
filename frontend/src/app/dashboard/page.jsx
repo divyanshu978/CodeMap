@@ -1,9 +1,8 @@
 "use client";
 import Navbar from "../component/Navbar";
-import QueryDashboard from "../component/QueryDashboard";
 import { useState } from "react";
-import { Upload, FolderOpen, Database, Activity } from "lucide-react";
 import dynamic from "next/dynamic";
+import QueryDashboard from "../component/QueryDashboard";
 
 // Dynamically import AstGraph to avoid SSR issues
 const AstGraph = dynamic(() => import("../component/astgraph"), {
@@ -15,6 +14,10 @@ export default function Dashboard() {
   const [file, setFile] = useState(null);
   const [githubUrl, setGithubUrl] = useState("");
   const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [localPath, setLocalPath] = useState("");
+  const [query, setQuery] = useState("");
+  const [queryResults, setQueryResults] = useState(null);
 
   const handleFileChange = (event) => {
     if (event.target.files && event.target.files[0]) {
@@ -32,7 +35,6 @@ export default function Dashboard() {
     setLoading(true);
     setMessage("📤 Uploading and analyzing...");
 
-    setLoading(true);
     try {
       const formData = new FormData();
       formData.append("codebase", file);
@@ -121,13 +123,6 @@ export default function Dashboard() {
     setLoading(false);
   };
 
-  const tabs = [
-    { id: "upload", label: "Upload Codebase", icon: Upload },
-    { id: "local", label: "Analyze Local", icon: FolderOpen },
-    { id: "query", label: "Query Database", icon: Database },
-    { id: "visualize", label: "Visualize", icon: Activity },
-  ];
-
   return (
     <>
       <div className="bg-gradient-to-b from-teal-800 to-teal-950 min-h-screen flex flex-col items-center text-white">
@@ -147,9 +142,10 @@ export default function Dashboard() {
           />
           <button
             className="ml-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-            onClick={handleUpload}
+            onClick={handleZipUpload}
+            disabled={loading}
           >
-            Upload
+            {loading ? "Uploading..." : "Upload"}
           </button>
         </div>
 
@@ -157,8 +153,8 @@ export default function Dashboard() {
       </div>
 
       <div>
-        
+        <QueryDashboard/>
       </div>
-    </div>
+    </>
   );
 }
