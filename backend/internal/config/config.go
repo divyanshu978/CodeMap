@@ -32,8 +32,12 @@ func Load() *AppConfig {
 		Port:         getEnv("PORT", "8080"),
 		Neo4jURI:     getEnv("NEO4J_URI", "neo4j://127.0.0.1:7687"),
 		Neo4jUser:    getEnv("NEO4J_USER", "neo4j"),
-		Neo4jPass:    getEnv("NEO4J_PASS", "your_neo4j_password"), 
-		ToolsPath:    getEnv("TOOLS_PATH", "../tools"), 
-		TempUploads:  getEnv("TEMP_UPLOADS", os.TempDir()), 
+		Neo4jPass:    getEnv("NEO4J_PASS", "your_neo4j_password"),
+		ToolsPath:    getEnv("TOOLS_PATH", "../tools"),
+		TempUploads:  getEnv("TEMP_UPLOADS", os.TempDir()),
+		S3Bucket:     getEnv("S3_BUCKET", "your-bucket-name"),
+		S3Region:     getEnv("S3_REGION", "your-region"),
+		AWSAccessKey: getEnv("AWS_ACCESS_KEY", ""),
+		AWSSecretKey: getEnv("AWS_SECRET_KEY", ""),
 	}
 }

@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import GraphView from "./GraphView";
 
 const QueryDashboard = () => {
   const [selectedQuery, setSelectedQuery] = useState(null);
@@ -23,7 +24,7 @@ const QueryDashboard = () => {
       name: "🌍 Languages Used", 
       description: "Programming languages in your project",
       icon: "🌍",
-      category: "� Understanding",
+      category: "🔍 Understanding",
       query: "MATCH (f:File) WHERE f.language IS NOT NULL RETURN f.language as language, count(f) as files ORDER BY files DESC",
       resultType: "table"
     },
@@ -218,6 +219,8 @@ const QueryDashboard = () => {
       });
 
       const data = await response.json();
+
+      console.log("Backend data" , data[0])
       
       if (response.ok) {
         setResults(data);
@@ -379,8 +382,70 @@ const QueryDashboard = () => {
           {renderResults()}
         </div>
       )}
+
+        <GraphView neo4jData={results} />
     </div>
   );
 };
+
+function neo4jToCytoscape(neo4jData) {
+  if (!neo4jData || !Array.isArray(neo4jData)) return { nodes: [], edges: [] };
+
+  const nodes = new Map();
+  const edges = [];
+  const referencedNodeIds = new Set();
+
+  neo4jData.forEach((row, index) => {
+    // Support both n/m/r and source/target
+    const nodeKeys = Object.keys(row).filter(k => k.length === 1 && k !== "r");
+    nodeKeys.forEach(k => {
+      const item = row[k];
+      if (item && item.Labels) {
+        const nodeId = item.ElementId || item.Id || `${k}_${index}`;
+        nodes.set(nodeId, {
+          data: {
+            id: nodeId,
+            label: item.Props?.name || item.Props?.path || item.Labels[0] || nodeId,
+            type: item.Labels[0] || "Unknown",
+            ...item.Props
+          }
+        });
+      }
+    });
+
+    // Relationship
+    if (row.r && row.r.Type && row.r.StartElementId && row.r.EndElementId) {
+      referencedNodeIds.add(row.r.StartElementId);
+      referencedNodeIds.add(row.r.EndElementId);
+      edges.push({
+        data: {
+          id: row.r.ElementId || `edge_${index}`,
+          source: row.r.StartElementId,
+          target: row.r.EndElementId,
+          label: row.r.Type,
+          ...row.r.Props
+        }
+      });
+    }
+  });
+
+  // Add placeholder nodes for any referenced node IDs not already present
+  referencedNodeIds.forEach(nodeId => {
+    if (!nodes.has(nodeId)) {
+      nodes.set(nodeId, {
+        data: {
+          id: nodeId,
+          label: "Unknown",
+          type: "Unknown"
+        }
+      });
+    }
+  });
+
+  return {
+    nodes: Array.from(nodes.values()),
+    edges
+  };
+}
 
 export default QueryDashboard;
